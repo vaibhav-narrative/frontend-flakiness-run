@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Data Table</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            font-weight: 300;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .table-container {
+            display: none;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+        }
+
+        th {
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+        }
+
+        tbody tr {
+            background: white;
+            border-bottom: 1px solid #eee;
+            transition: all 0.3s ease;
+        }
+
+        tbody tr:hover {
+            background: #f8f9ff;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        td {
+            color: #555;
+            font-size: 0.95rem;
+        }
+
+        .status-dropdown {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 100px;
+        }
+
+        .status-dropdown:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .status-dropdown.active {
+            background: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+
+        .status-dropdown.inactive {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            th, td {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>User Management Dashboard</h1>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <div class="loading-text">Loading user data...</div>
+        </div>
+
+        <div id="tableContainer" class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Department</th>
+                        <th>Join Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const LOAD_TIME_MS = 10000; // Change this value to control loading time (in milliseconds)
+        
+        // Sample user data
+        const userData = [
+            {
+                id: 1,
+                name: "John Smith",
+                email: "john.smith@company.com",
+                department: "Engineering",
+                joinDate: "2023-01-15",
+                status: "active"
+            },
+            {
+                id: 2,
+                name: "Sarah Johnson",
+                email: "sarah.johnson@company.com",
+                department: "Marketing",
+                joinDate: "2023-03-22",
+                status: "active"
+            },
+            {
+                id: 3,
+                name: "Michael Brown",
+                email: "michael.brown@company.com",
+                department: "Sales",
+                joinDate: "2022-11-08",
+                status: "inactive"
+            },
+            {
+                id: 4,
+                name: "Emily Davis",
+                email: "emily.davis@company.com",
+                department: "HR",
+                joinDate: "2023-05-10",
+                status: "active"
+            },
+            {
+                id: 5,
+                name: "Robert Wilson",
+                email: "robert.wilson@company.com",
+                department: "Finance",
+                joinDate: "2022-12-03",
+                status: "active"
+            },
+            {
+                id: 6,
+                name: "Lisa Garcia",
+                email: "lisa.garcia@company.com",
+                department: "Engineering",
+                joinDate: "2023-02-28",
+                status: "active"
+            },
+            {
+                id: 7,
+                name: "David Martinez",
+                email: "david.martinez@company.com",
+                department: "Marketing",
+                joinDate: "2022-09-15",
+                status: "inactive"
+            },
+            {
+                id: 8,
+                name: "Jennifer Lee",
+                email: "jennifer.lee@company.com",
+                department: "Design",
+                joinDate: "2023-04-05",
+                status: "active"
+            }
+        ];
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        function createStatusDropdown(currentStatus, userId) {
+            return `
+                <select class="status-dropdown ${currentStatus}" onchange="updateStatus(${userId}, this.value)">
+                    <option value="active" ${currentStatus === 'active' ? 'selected' : ''}>Active</option>
+                    <option value="inactive" ${currentStatus === 'inactive' ? 'selected' : ''}>Inactive</option>
+                </select>
+            `;
+        }
+
+        function updateStatus(userId, newStatus) {
+            // Update the data
+            const user = userData.find(u => u.id === userId);
+            if (user) {
+                user.status = newStatus;
+            }
+
+            // Update the dropdown styling
+            const dropdown = event.target;
+            dropdown.className = `status-dropdown ${newStatus}`;
+            
+            console.log(`User ${userId} status updated to: ${newStatus}`);
+        }
+
+        function populateTable() {
+            const tableBody = document.getElementById('userTableBody');
+            
+            userData.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.id}</td>
+                    <td>${user.name}</td>
+                    <td>${user.email}</td>
+                    <td>${user.department}</td>
+                    <td>${formatDate(user.joinDate)}</td>
+                    <td>${createStatusDropdown(user.status, user.id)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function showTable() {
+            const loading = document.getElementById('loading');
+            const tableContainer = document.getElementById('tableContainer');
+            
+            loading.style.display = 'none';
+            tableContainer.style.display = 'block';
+            tableContainer.classList.add('fade-in');
+        }
+
+        // Load data after 1 second delay
+        setTimeout(() => {
+            populateTable();
+            showTable();
+        }, 1000);
+    </script>
+</body>
+</html> 
